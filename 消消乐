@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="x5-orientation" content="portrait">
+    <meta name="x5-fullscreen" content="true">
+    <meta name="browsermode" content="application">
+    <title>消消乐 - Match 3 Puzzle</title>
+    <meta name="description" content="经典消消乐游戏，滑动消除方块，挑战高分！">
+    <meta name="keywords" content="消消乐,三消游戏,休闲游戏,微信游戏">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
+
+        .game-wrapper {
+            width: 100%;
+            max-width: 500px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+        }
+
+        /* 首页样式 */
+        .home-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+        }
+
+        .game-title {
+            font-size: 48px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            margin-bottom: 10px;
+            letter-spacing: 8px;
+        }
+
+        .game-subtitle {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+            letter-spacing: 4px;
+            margin-bottom: 40px;
+        }
+
+        .stats-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 20px 30px;
+            margin-bottom: 30px;
+            width: 90%;
+            max-width: 350px;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 5px;
+        }
+
+        .stat-divider {
+            width: 1px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn {
+            border: none;
+            border-radius: 30px;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 8px 0;
+            min-width: 200px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(240, 147, 251, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.95);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .btn-icon {
+            margin-right: 8px;
+        }
+
+        .share-tip {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        /* 游戏界面样式 */
+        .game-screen {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .game-screen.active {
+            display: flex;
+        }
+
+        .home-screen.hidden {
+            display: none;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            margin-bottom: 10px;
+        }
+
+        .header-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .header-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .header-value.warning {
+            color: #ff4757;
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .game-board-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .game-board {
+            position: relative;
+            touch-action: none;
+        }
+
+        .cell {
+            position: absolute;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .cell.selected {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+            z-index: 10;
+        }
+
+        .cell.matched {
+            animation: matched 0.3s ease forwards;
+        }
+
+        @keyframes matched {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.5; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        .cell.falling {
+            transition: top 0.2s ease;
+        }
+
+        .cell-icon {
+            font-size: 20px;
+        }
+
+        .combo-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            animation: comboPopup 0.5s ease;
+            pointer-events: none;
+        }
+
+        .combo-text {
+            font-size: 36px;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+        }
+
+        @keyframes comboPopup {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.2); }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .game-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 15px 0;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            padding: 10px 25px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* 弹窗样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-box {
+            width: 85%;
+            max-width: 320px;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 25px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .modal-btn {
+            border-radius: 25px;
+            padding: 12px 0;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+        }
+
+        .modal-btn.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .modal-btn.secondary {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .modal-btn.share {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .result-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .result-stats {
+            margin-bottom: 20px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .result-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .result-value {
+            color: #333;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .result-stars {
+            margin-top: 15px;
+            font-size: 30px;
+        }
+
+        /* 关卡选择 */
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .level-item {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4);
+        }
+
+        .level-item.locked {
+            background: #ccc;
+            box-shadow: none;
+        }
+
+        .level-number {
+            font-size: 22px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .level-stars {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.9);
+            margin-top: 2px;
+        }
+
+        /* 规则弹窗 */
+        .rules-list {
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .rule-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .rule-item:last-child {
+            border-bottom: none;
+        }
+
+        .rule-icon {
+            font-size: 20px;
+            margin-right: 10px;
+        }
+
+        .rule-text {
+            font-size: 14px;
+            color: #333;
+            line-height: 1.5;
+            flex: 1;
+        }
+
+        /* 微信分享提示 */
+        .wechat-share-tip {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            z-index: 999;
+            display: none;
+        }
+
+        .wechat-share-tip.show {
+            display: block;
+            animation: fadeInOut 3s ease;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-10px); }
+            20% { opacity: 1; transform: translateY(0); }
+            80% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-10px); }
+        }
+
+        /* 加载动画 */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .loading.hidden {
+            display: none;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="wechat-share-tip" id="wechatShareTip">点击右上角分享给好友</div>
+
+    <div class="game-wrapper">
+        <!-- 首页 -->
+        <div class="home-screen" id="homeScreen">
+            <text class="game-title">消消乐</text>
+            <text class="game-subtitle">Match 3 Puzzle</text>
+
+            <div class="stats-card">
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <text class="stat-value" id="homeHighestScore">0</text>
+                        <text class="stat-label">最高分</text>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <text class="stat-value" id="homeHighestLevel">1</text>
+                        <text class="stat-label">最高关卡</text>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <text class="stat-value" id="homeTotalGames">0</text>
+                        <text class="stat-label">游戏次数</text>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="game.startGame()">
+                <span class="btn-icon">🎮</span>开始游戏
+            </button>
+            <button class="btn btn-secondary" onclick="game.showLevelModal()">
+                <span class="btn-icon">📋</span>关卡选择
+            </button>
+            <button class="btn btn-secondary" onclick="game.showRulesModal()">
+                <span class="btn-icon">📖</span>游戏规则
+            </button>
+            <button class="btn btn-secondary" onclick="game.shareGame()">
+                <span class="btn-icon">📤</span>分享游戏
+            </button>
+        </div>
+
+        <!-- 游戏界面 -->
+        <div class="game-screen" id="gameScreen">
+            <div class="game-header">
+                <div class="header-item">
+                    <text class="header-label">关卡</text>
+                    <text class="header-value" id="gameLevel">1</text>
+                </div>
+                <div class="header-item">
+                    <text class="header-label">分数</text>
+                    <text class="header-value" id="gameScore">0</text>
+                </div>
+                <div class="header-item">
+                    <text class="header-label">目标</text>
+                    <text class="header-value" id="gameTarget">1000</text>
+                </div>
+                <div class="header-item">
+                    <text class="header-label">时间</text>
+                    <text class="header-value" id="gameTime">60</text>
+                </div>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+
+            <div class="game-board-container">
+                <div class="game-board" id="gameBoard"></div>
+                <div class="combo-display" id="comboDisplay" style="display: none;">
+                    <text class="combo-text" id="comboText"></text>
+                </div>
+            </div>
+
+            <div class="game-controls">
+                <button class="control-btn" onclick="game.pauseGame()">⏸️ 暂停</button>
+                <button class="control-btn" onclick="game.restartGame()">🔄 重玩</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 暂停弹窗 -->
+    <div class="modal-overlay" id="pauseModal">
+        <div class="modal-box">
+            <text class="modal-title">游戏暂停</text>
+            <div class="modal-buttons">
+                <button class="modal-btn primary" onclick="game.resumeGame()">继续游戏</button>
+                <button class="modal-btn secondary" onclick="game.quitGame()">退出游戏</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 结果弹窗 -->
+    <div class="modal-overlay" id="resultModal">
+        <div class="modal-box">
+            <text class="result-title" id="resultTitle">🎉 恭喜过关!</text>
+            <div class="result-stats">
+                <div class="result-item">
+                    <text class="result-label">得分</text>
+                    <text class="result-value" id="resultScore">0</text>
+                </div>
+                <div class="result-item">
+                    <text class="result-label">最高连击</text>
+                    <text class="result-value" id="resultCombo">0</text>
+                </div>
+                <div class="result-stars" id="resultStars"></div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn primary" id="nextLevelBtn" onclick="game.nextLevel()">下一关</button>
+                <button class="modal-btn primary" id="retryBtn" onclick="game.restartGame()" style="display: none;">再玩一次</button>
+                <button class="modal-btn secondary" onclick="game.quitGame()">返回首页</button>
+                <button class="modal-btn share" onclick="game.shareResult()">分享成绩</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 关卡选择弹窗 -->
+    <div class="modal-overlay" id="levelModal">
+        <div class="modal-box">
+            <text class="modal-title">选择关卡</text>
+            <div class="level-grid" id="levelGrid"></div>
+            <div class="modal-buttons" style="margin-top: 15px;">
+                <button class="modal-btn secondary" onclick="game.hideLevelModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 规则弹窗 -->
+    <div class="modal-overlay" id="rulesModal">
+        <div class="modal-box">
+            <text class="modal-title">游戏规则</text>
+            <div class="rules-list">
+                <div class="rule-item">
+                    <text class="rule-icon">👆</text>
+                    <text class="rule-text">滑动交换相邻的两个方块</text>
+                </div>
+                <div class="rule-item">
+                    <text class="rule-icon">3️⃣</text>
+                    <text class="rule-text">将3个或更多相同颜色的方块连成一线即可消除</text>
+                </div>
+                <div class="rule-item">
+                    <text class="rule-icon">⭐</text>
+                    <text class="rule-text">消除越多方块，获得分数越高</text>
+                </div>
+                <div class="rule-item">
+                    <text class="rule-icon">⏱️</text>
+                    <text class="rule-text">在规定时间内达到目标分数即可过关</text>
+                </div>
+                <div class="rule-item">
+                    <text class="rule-icon">💥</text>
+                    <text class="rule-text">连续消除可获得连击加分</text>
+                </div>
+            </div>
+            <div class="modal-buttons" style="margin-top: 15px;">
+                <button class="modal-btn primary" onclick="game.hideRulesModal()">知道了</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const Match3Game = (function() {
+            const BOARD_SIZE = 8;
+            const COLORS = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dfe6e9'];
+            const MAX_LEVEL = 30;
+
+            let cellSize = 50;
+            let board = [];
+            let level = 1;
+            let score = 0;
+            let targetScore = 1000;
+            let timeLeft = 60;
+            let combo = 0;
+            let maxCombo = 0;
+            let timer = null;
+            let isPaused = false;
+            let isAnimating = false;
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let selectedCell = null;
+
+            function init() {
+                loadGameData();
+                updateHomeStats();
+                calculateCellSize();
+                window.addEventListener('resize', calculateCellSize);
+                hideLoading();
+                checkWeChatEnvironment();
+            }
+
+            function calculateCellSize() {
+                const container = document.getElementById('gameBoard');
+                const containerWidth = Math.min(window.innerWidth - 40, 450);
+                cellSize = Math.floor(containerWidth / BOARD_SIZE);
+                container.style.width = (cellSize * BOARD_SIZE) + 'px';
+                container.style.height = (cellSize * BOARD_SIZE) + 'px';
+                
+                if (board.length > 0) {
+                    renderBoard();
+                }
+            }
+
+            function hideLoading() {
+                setTimeout(() => {
+                    document.getElementById('loading').classList.add('hidden');
+                }, 500);
+            }
+
+            function checkWeChatEnvironment() {
+                const ua = navigator.userAgent.toLowerCase();
+                const isWeChat = ua.indexOf('micromessenger') !== -1;
+                
+                if (isWeChat) {
+                    document.getElementById('wechatShareTip').classList.add('show');
+                    initWeChatShare();
+                }
+            }
+
+            function initWeChatShare() {
+                // 微信JS-SDK分享配置
+                // 需要在服务器端签名，这里提供示例代码
+                if (typeof wx !== 'undefined') {
+                    wx.ready(function() {
+                        wx.updateAppMessageShareData({
+                            title: '消消乐 - 经典三消游戏',
+                            desc: '来挑战我的最高分吧！',
+                            link: window.location.href,
+                            imgUrl: '',
+                            success: function() {}
+                        });
+                        wx.updateTimelineShareData({
+                            title: '消消乐 - 经典三消游戏',
+                            link: window.location.href,
+                            imgUrl: '',
+                            success: function() {}
+                        });
+                    });
+                }
+            }
+
+            function loadGameData() {
+                const data = localStorage.getItem('match3GameData');
+                if (!data) {
+                    const defaultData = {
+                        highestScore: 0,
+                        highestLevel: 1,
+                        totalGames: 0,
+                        unlockedLevels: [1],
+                        levelScores: {}
+                    };
+                    localStorage.setItem('match3GameData', JSON.stringify(defaultData));
+                }
+            }
+
+            function getGameData() {
+                const data = localStorage.getItem('match3GameData');
+                return data ? JSON.parse(data) : {};
+            }
+
+            function saveGameData(data) {
+                localStorage.setItem('match3GameData', JSON.stringify(data));
+            }
+
+            function updateHomeStats() {
+                const data = getGameData();
+                document.getElementById('homeHighestScore').textContent = data.highestScore || 0;
+                document.getElementById('homeHighestLevel').textContent = data.highestLevel || 1;
+                document.getElementById('homeTotalGames').textContent = data.totalGames || 0;
+            }
+
+            function startGame(lvl) {
+                level = lvl || 1;
+                score = 0;
+                combo = 0;
+                maxCombo = 0;
+                targetScore = 1000 + (level - 1) * 500;
+                timeLeft = Math.max(30, 90 - level * 2);
+                isPaused = false;
+
+                document.getElementById('homeScreen').classList.add('hidden');
+                document.getElementById('gameScreen').classList.add('active');
+
+                updateGameUI();
+                generateBoard();
+                startTimer();
+            }
+
+            function generateBoard() {
+                board = [];
+                for (let y = 0; y < BOARD_SIZE; y++) {
+                    for (let x = 0; x < BOARD_SIZE; x++) {
+                        let colorIndex;
+                        do {
+                            colorIndex = Math.floor(Math.random() * COLORS.length);
+                        } while (wouldMatch(x, y, colorIndex));
+                        
+                        board.push({
+                            id: `cell-${x}-${y}`,
+                            x, y,
+                            colorIndex,
+                            color: COLORS[colorIndex],
+                            matched: false,
+                            falling: false
+                        });
+                    }
+                }
+                renderBoard();
+                setupTouchEvents();
+            }
+
+            function wouldMatch(x, y, colorIndex) {
+                let hCount = 1, vCount = 1;
+                
+                for (let i = x - 1; i >= 0; i--) {
+                    const cell = board.find(c => c.x === i && c.y === y);
+                    if (cell && cell.colorIndex === colorIndex) hCount++;
+                    else break;
+                }
+                
+                for (let i = y - 1; i >= 0; i--) {
+                    const cell = board.find(c => c.x === x && c.y === i);
+                    if (cell && cell.colorIndex === colorIndex) vCount++;
+                    else break;
+                }
+                
+                return hCount >= 3 || vCount >= 3;
+            }
+
+            function renderBoard() {
+                const container = document.getElementById('gameBoard');
+                container.innerHTML = '';
+                
+                board.forEach(cell => {
+                    const el = document.createElement('div');
+                    el.className = 'cell';
+                    el.id = cell.id;
+                    el.style.backgroundColor = cell.color;
+                    el.style.left = (cell.x * cellSize + 2) + 'px';
+                    el.style.top = (cell.y * cellSize + 2) + 'px';
+                    el.style.width = (cellSize - 4) + 'px';
+                    el.style.height = (cellSize - 4) + 'px';
+                    
+                    if (cell.matched) el.classList.add('matched');
+                    if (cell.falling) el.classList.add('falling');
+                    
+                    container.appendChild(el);
+                });
+            }
+
+            function setupTouchEvents() {
+                const container = document.getElementById('gameBoard');
+                
+                container.addEventListener('touchstart', handleTouchStart, { passive: false });
+                container.addEventListener('touchmove', handleTouchMove, { passive: false });
+                container.addEventListener('touchend', handleTouchEnd, { passive: false });
+                
+                container.addEventListener('mousedown', handleMouseDown);
+                container.addEventListener('mousemove', handleMouseMove);
+                container.addEventListener('mouseup', handleMouseUp);
+            }
+
+            function handleTouchStart(e) {
+                if (isPaused || isAnimating) return;
+                e.preventDefault();
+                const touch = e.touches[0];
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+            }
+
+            function handleTouchMove(e) {
+                e.preventDefault();
+            }
+
+            function handleTouchEnd(e) {
+                if (isPaused || isAnimating) return;
+                e.preventDefault();
+                
+                const touch = e.changedTouches[0];
+                const deltaX = touch.clientX - touchStartX;
+                const deltaY = touch.clientY - touchStartY;
+                
+                const rect = document.getElementById('gameBoard').getBoundingClientRect();
+                const startX = Math.floor((touchStartX - rect.left) / cellSize);
+                const startY = Math.floor((touchStartY - rect.top) / cellSize);
+                
+                processSwap(startX, startY, deltaX, deltaY);
+            }
+
+            function handleMouseDown(e) {
+                if (isPaused || isAnimating) return;
+                touchStartX = e.clientX;
+                touchStartY = e.clientY;
+            }
+
+            function handleMouseMove(e) {
+                // Not needed for mouse
+            }
+
+            function handleMouseUp(e) {
+                if (isPaused || isAnimating) return;
+                
+                const deltaX = e.clientX - touchStartX;
+                const deltaY = e.clientY - touchStartY;
+                
+                const rect = document.getElementById('gameBoard').getBoundingClientRect();
+                const startX = Math.floor((touchStartX - rect.left) / cellSize);
+                const startY = Math.floor((touchStartY - rect.top) / cellSize);
+                
+                processSwap(startX, startY, deltaX, deltaY);
+            }
+
+            function processSwap(startX, startY, deltaX, deltaY) {
+                if (startX < 0 || startX >= BOARD_SIZE || startY < 0 || startY >= BOARD_SIZE) return;
+                
+                let targetX = startX, targetY = startY;
+                const threshold = 20;
+                
+                if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                    if (deltaX > threshold) targetX = startX + 1;
+                    else if (deltaX < -threshold) targetX = startX - 1;
+                    else return;
+                } else {
+                    if (deltaY > threshold) targetY = startY + 1;
+                    else if (deltaY < -threshold) targetY = startY - 1;
+                    else return;
+                }
+                
+                if (targetX < 0 || targetX >= BOARD_SIZE || targetY < 0 || targetY >= BOARD_SIZE) return;
+                
+                swapCells(startX, startY, targetX, targetY);
+            }
+
+            async function swapCells(x1, y1, x2, y2) {
+                isAnimating = true;
+                
+                const cell1 = board.find(c => c.x === x1 && c.y === y1);
+                const cell2 = board.find(c => c.x === x2 && c.y === y2);
+                
+                if (!cell1 || !cell2) {
+                    isAnimating = false;
+                    return;
+                }
+
+                const tempX = cell1.x, tempY = cell1.y;
+                cell1.x = cell2.x;
+                cell1.y = cell2.y;
+                cell2.x = tempX;
+                cell2.y = tempY;
+                
+                renderBoard();
+                
+                const matches = findMatches();
+                
+                if (matches.length === 0) {
+                    await delay(150);
+                    const tempX2 = cell1.x, tempY2 = cell1.y;
+                    cell1.x = cell2.x;
+                    cell1.y = cell2.y;
+                    cell2.x = tempX2;
+                    cell2.y = tempY2;
+                    renderBoard();
+                    isAnimating = false;
+                    return;
+                }
+
+                await processMatches();
+                isAnimating = false;
+            }
+
+            function findMatches() {
+                const matches = [];
+                
+                for (let y = 0; y < BOARD_SIZE; y++) {
+                    for (let x = 0; x < BOARD_SIZE - 2; x++) {
+                        const cell1 = board.find(c => c.x === x && c.y === y);
+                        const cell2 = board.find(c => c.x === x + 1 && c.y === y);
+                        const cell3 = board.find(c => c.x === x + 2 && c.y === y);
+                        
+                        if (cell1 && cell2 && cell3 && 
+                            cell1.colorIndex === cell2.colorIndex && 
+                            cell2.colorIndex === cell3.colorIndex) {
+                            let matchCells = [cell1, cell2, cell3];
+                            for (let i = x + 3; i < BOARD_SIZE; i++) {
+                                const nextCell = board.find(c => c.x === i && c.y === y);
+                                if (nextCell && nextCell.colorIndex === cell1.colorIndex) {
+                                    matchCells.push(nextCell);
+                                } else break;
+                            }
+                            matches.push({ cells: matchCells, type: 'horizontal' });
+                        }
+                    }
+                }
+                
+                for (let x = 0; x < BOARD_SIZE; x++) {
+                    for (let y = 0; y < BOARD_SIZE - 2; y++) {
+                        const cell1 = board.find(c => c.x === x && c.y === y);
+                        const cell2 = board.find(c => c.x === x && c.y === y + 1);
+                        const cell3 = board.find(c => c.x === x && c.y === y + 2);
+                        
+                        if (cell1 && cell2 && cell3 && 
+                            cell1.colorIndex === cell2.colorIndex && 
+                            cell2.colorIndex === cell3.colorIndex) {
+                            let matchCells = [cell1, cell2, cell3];
+                            for (let i = y + 3; i < BOARD_SIZE; i++) {
+                                const nextCell = board.find(c => c.x === x && c.y === i);
+                                if (nextCell && nextCell.colorIndex === cell1.colorIndex) {
+                                    matchCells.push(nextCell);
+                                } else break;
+                            }
+                            matches.push({ cells: matchCells, type: 'vertical' });
+                        }
+                    }
+                }
+                
+                return matches;
+            }
+
+            async function processMatches() {
+                let currentCombo = 0;
+                let totalScore = 0;
+                
+                while (true) {
+                    const matches = findMatches();
+                    if (matches.length === 0) break;
+                    
+                    currentCombo++;
+                    const matchScore = calculateMatchScore(matches, currentCombo);
+                    totalScore += matchScore;
+                    
+                    await removeMatches(matches);
+                    await delay(100);
+                    await dropCells();
+                    await delay(100);
+                    await fillBoard();
+                    await delay(150);
+                }
+
+                maxCombo = Math.max(maxCombo, currentCombo);
+                score += totalScore;
+                
+                updateGameUI();
+                
+                if (currentCombo > 1) {
+                    showCombo(currentCombo);
+                }
+
+                if (score >= targetScore) {
+                    gameOver(true);
+                }
+            }
+
+            function calculateMatchScore(matches, combo) {
+                const uniqueCells = new Set();
+                matches.forEach(match => {
+                    match.cells.forEach(cell => uniqueCells.add(cell.id));
+                });
+                
+                let matchScore = uniqueCells.size * 10;
+                if (uniqueCells.size > 3) {
+                    matchScore += (uniqueCells.size - 3) * 20;
+                }
+                matchScore *= (1 + combo * 0.5);
+                
+                return Math.floor(matchScore);
+            }
+
+            async function removeMatches(matches) {
+                matches.forEach(match => {
+                    match.cells.forEach(cell => {
+                        cell.matched = true;
+                    });
+                });
+                renderBoard();
+                await delay(300);
+                board = board.filter(c => !c.matched);
+            }
+
+            async function dropCells() {
+                for (let x = 0; x < BOARD_SIZE; x++) {
+                    const column = board.filter(c => c.x === x).sort((a, b) => b.y - a.y);
+                    let emptyY = BOARD_SIZE - 1;
+                    
+                    for (const cell of column) {
+                        if (cell.y !== emptyY) {
+                            cell.y = emptyY;
+                            cell.falling = true;
+                        }
+                        emptyY--;
+                    }
+                }
+                renderBoard();
+                await delay(200);
+                board.forEach(c => c.falling = false);
+            }
+
+            async function fillBoard() {
+                for (let x = 0; x < BOARD_SIZE; x++) {
+                    const column = board.filter(c => c.x === x);
+                    const emptyCount = BOARD_SIZE - column.length;
+                    
+                    for (let i = 0; i < emptyCount; i++) {
+                        const colorIndex = Math.floor(Math.random() * COLORS.length);
+                        board.push({
+                            id: `cell-${x}-${i}-${Date.now()}`,
+                            x, y: i,
+                            colorIndex,
+                            color: COLORS[colorIndex],
+                            matched: false,
+                            falling: true
+                        });
+                    }
+                }
+                renderBoard();
+                await delay(200);
+                board.forEach(c => c.falling = false);
+            }
+
+            function showCombo(comboCount) {
+                const display = document.getElementById('comboDisplay');
+                const text = document.getElementById('comboText');
+                text.textContent = `${comboCount}连击!`;
+                display.style.display = 'block';
+                
+                setTimeout(() => {
+                    display.style.display = 'none';
+                }, 500);
+            }
+
+            function updateGameUI() {
+                document.getElementById('gameLevel').textContent = level;
+                document.getElementById('gameScore').textContent = score;
+                document.getElementById('gameTarget').textContent = targetScore;
+                document.getElementById('gameTime').textContent = timeLeft;
+                
+                const timeEl = document.getElementById('gameTime');
+                if (timeLeft <= 10) {
+                    timeEl.classList.add('warning');
+                } else {
+                    timeEl.classList.remove('warning');
+                }
+                
+                const progress = Math.min(100, (score / targetScore) * 100);
+                document.getElementById('progressFill').style.width = progress + '%';
+            }
+
+            function startTimer() {
+                if (timer) clearInterval(timer);
+                timer = setInterval(() => {
+                    if (isPaused || isAnimating) return;
+                    
+                    timeLeft--;
+                    updateGameUI();
+                    
+                    if (timeLeft <= 0) {
+                        gameOver(false);
+                    }
+                }, 1000);
+            }
+
+            function pauseGame() {
+                isPaused = true;
+                document.getElementById('pauseModal').classList.add('active');
+            }
+
+            function resumeGame() {
+                isPaused = false;
+                document.getElementById('pauseModal').classList.remove('active');
+            }
+
+            function restartGame() {
+                document.getElementById('pauseModal').classList.remove('active');
+                document.getElementById('resultModal').classList.remove('active');
+                startGame(level);
+            }
+
+            function quitGame() {
+                if (timer) clearInterval(timer);
+                document.getElementById('pauseModal').classList.remove('active');
+                document.getElementById('resultModal').classList.remove('active');
+                document.getElementById('gameScreen').classList.remove('active');
+                document.getElementById('homeScreen').classList.remove('hidden');
+                updateHomeStats();
+            }
+
+            function gameOver(isWin) {
+                if (timer) clearInterval(timer);
+                
+                const stars = calculateStars();
+                
+                document.getElementById('resultTitle').textContent = isWin ? '🎉 恭喜过关!' : '⏰ 时间到!';
+                document.getElementById('resultScore').textContent = score;
+                document.getElementById('resultCombo').textContent = maxCombo;
+                document.getElementById('resultStars').textContent = '⭐'.repeat(stars);
+                
+                document.getElementById('nextLevelBtn').style.display = isWin ? 'block' : 'none';
+                document.getElementById('retryBtn').style.display = isWin ? 'none' : 'block';
+                
+                document.getElementById('resultModal').classList.add('active');
+                
+                if (isWin) {
+                    unlockNextLevel();
+                    updateHighestScore();
+                }
+                updateTotalGames();
+            }
+
+            function calculateStars() {
+                const ratio = score / targetScore;
+                if (ratio >= 2) return 3;
+                if (ratio >= 1.5) return 2;
+                if (ratio >= 1) return 1;
+                return 0;
+            }
+
+            function unlockNextLevel() {
+                const data = getGameData();
+                const nextLvl = level + 1;
+                
+                if (!data.unlockedLevels.includes(nextLvl)) {
+                    data.unlockedLevels.push(nextLvl);
+                }
+                
+                if (level >= data.highestLevel) {
+                    data.highestLevel = nextLvl;
+                }
+                
+                const levelScores = data.levelScores || {};
+                if (!levelScores[level] || score > levelScores[level]) {
+                    levelScores[level] = score;
+                }
+                data.levelScores = levelScores;
+                
+                saveGameData(data);
+            }
+
+            function updateHighestScore() {
+                const data = getGameData();
+                if (score > data.highestScore) {
+                    data.highestScore = score;
+                    saveGameData(data);
+                }
+            }
+
+            function updateTotalGames() {
+                const data = getGameData();
+                data.totalGames = (data.totalGames || 0) + 1;
+                saveGameData(data);
+            }
+
+            function nextLevel() {
+                document.getElementById('resultModal').classList.remove('active');
+                startGame(level + 1);
+            }
+
+            function showLevelModal() {
+                const data = getGameData();
+                const grid = document.getElementById('levelGrid');
+                grid.innerHTML = '';
+                
+                for (let i = 1; i <= MAX_LEVEL; i++) {
+                    const unlocked = data.unlockedLevels.includes(i);
+                    const levelScore = (data.levelScores || {})[i] || 0;
+                    const stars = calculateLevelStars(levelScore, i);
+                    
+                    const item = document.createElement('div');
+                    item.className = 'level-item' + (unlocked ? '' : ' locked');
+                    item.innerHTML = `
+                        <text class="level-number">${i}</text>
+                        ${unlocked && stars > 0 ? `<text class="level-stars">${'⭐'.repeat(stars)}</text>` : ''}
+                        ${!unlocked ? '<text class="level-number">🔒</text>' : ''}
+                    `;
+                    
+                    if (unlocked) {
+                        item.onclick = () => {
+                            document.getElementById('levelModal').classList.remove('active');
+                            startGame(i);
+                        };
+                    }
+                    
+                    grid.appendChild(item);
+                }
+                
+                document.getElementById('levelModal').classList.add('active');
+            }
+
+            function calculateLevelStars(score, lvl) {
+                const target = 1000 + (lvl - 1) * 500;
+                if (score >= target * 2) return 3;
+                if (score >= target * 1.5) return 2;
+                if (score >= target) return 1;
+                return 0;
+            }
+
+            function hideLevelModal() {
+                document.getElementById('levelModal').classList.remove('active');
+            }
+
+            function showRulesModal() {
+                document.getElementById('rulesModal').classList.add('active');
+            }
+
+            function hideRulesModal() {
+                document.getElementById('rulesModal').classList.remove('active');
+            }
+
+            function shareGame() {
+                const ua = navigator.userAgent.toLowerCase();
+                const isWeChat = ua.indexOf('micromessenger') !== -1;
+                
+                if (isWeChat) {
+                    alert('请点击右上角菜单，选择"发送给朋友"或"分享到朋友圈"');
+                } else if (navigator.share) {
+                    navigator.share({
+                        title: '消消乐 - 经典三消游戏',
+                        text: '来挑战我的最高分吧！',
+                        url: window.location.href
+                    });
+                } else {
+                    copyToClipboard(window.location.href);
+                    alert('链接已复制到剪贴板，快去分享给好友吧！');
+                }
+            }
+
+            function shareResult() {
+                const text = `我在消消乐第${level}关获得了${score}分！最高${maxCombo}连击！来挑战我吧！`;
+                const ua = navigator.userAgent.toLowerCase();
+                const isWeChat = ua.indexOf('micromessenger') !== -1;
+                
+                if (isWeChat) {
+                    alert('请点击右上角菜单，选择"发送给朋友"或"分享到朋友圈"');
+                } else if (navigator.share) {
+                    navigator.share({
+                        title: '消消乐成绩分享',
+                        text: text,
+                        url: window.location.href
+                    });
+                } else {
+                    copyToClipboard(text + '\n' + window.location.href);
+                    alert('成绩已复制到剪贴板，快去分享给好友吧！');
+                }
+            }
+
+            function copyToClipboard(text) {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+            }
+
+            function delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            return {
+                init,
+                startGame,
+                pauseGame,
+                resumeGame,
+                restartGame,
+                quitGame,
+                nextLevel,
+                showLevelModal,
+                hideLevelModal,
+                showRulesModal,
+                hideRulesModal,
+                shareGame,
+                shareResult
+            };
+        })();
+
+        const game = Match3Game;
+        document.addEventListener('DOMContentLoaded', game.init);
+    </script>
+</body>
+</html>
